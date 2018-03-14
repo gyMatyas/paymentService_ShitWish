@@ -46,7 +46,10 @@ public class PaymentServiceController {
 
         // TODO: Here comes the request for Product service (change quantity)
 
-        return String.valueOf(userId);
+
+        JSONObject response = new JSONObject();
+
+        return String.valueOf(response.put("success", true));
     }
 
 
