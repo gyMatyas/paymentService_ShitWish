@@ -1,20 +1,24 @@
 package com.shitwish.paymentService.PaymentServiceApp.Controller;
 
+import com.shitwish.paymentService.PaymentServiceApp.Model.Payment;
+import com.shitwish.paymentService.PaymentServiceApp.Service.PaymentService;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class PaymentServiceController {
+
+    @Autowired
+    PaymentService service;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String index() {
-        return "HELLO BOI";
+        return "Payment service";
     }
 
     @RequestMapping(value = "/pay", method = RequestMethod.POST)
@@ -24,10 +28,11 @@ public class PaymentServiceController {
 
         // TODO: Here comes the request for UserService (getting the buyer)
 
-        /*String buyerResponse = restTemplate.getForObject("userservice/user/" + userId, String.class);
+        String buyerResponse = restTemplate.getForObject("https://shitwish-user.herokuapp.com/user/" + userId, String.class);
         JSONObject buyerJSON = new JSONObject(buyerResponse);
-        float buyerWallet = (float) buyerJSON.get("wallet");
-        */
+        int buyerBalance = (int) buyerJSON.get("balance");
+        Payment payment = new Payment( (long) userId, (long) userId, buyerBalance);
+        service.savePayment(payment);
         // TODO: Here comes the request for OrderService (getting the order with products) with fake status
 
         //String orderResponse = restTemplate.getForObject("orderservice/getForUser/" + userId, String.class);
@@ -52,5 +57,18 @@ public class PaymentServiceController {
         return String.valueOf(response.put("success", true));
     }
 
+
+    @RequestMapping(value = "/payment/{id}", method = RequestMethod.GET)
+    public String getPayment(@PathVariable("id") String id) {
+        JSONObject response = new JSONObject();
+        try {
+            long userId = Long.parseLong(id);
+            response.put("bought", service.getPaymentsByBuyer(userId));
+            response.put("sold", service.getPaymentsBySeller(userId));
+        } catch (NumberFormatException e) {
+            response.put("message", "Wrong user ID.");
+        }
+        return String.valueOf(response);
+    }
 
 }
