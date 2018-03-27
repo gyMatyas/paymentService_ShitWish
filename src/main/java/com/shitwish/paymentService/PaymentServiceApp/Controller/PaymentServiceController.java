@@ -22,9 +22,8 @@ public class PaymentServiceController {
     }
 
     @RequestMapping(value = "/pay", method = RequestMethod.POST)
-    public String initiatePayment(@RequestParam("data") String json) {
-        JSONObject request = new JSONObject(json);
-        int userId = (int) request.get("userId");
+    public String initiatePayment(@RequestParam("userId") String json) {
+        int userId = Integer.valueOf(json);
 
         // TODO: Here comes the request for UserService (getting the buyer)
 
@@ -45,13 +44,15 @@ public class PaymentServiceController {
 
         // TODO: Here comes process of payment
 
+
+        boolean succeeded = true;
         // TODO: Here comes the status change request for OrderService
 
         // TODO: Here comes the request for Product service (change quantity)
 
 
         JSONObject response = new JSONObject();
-        boolean succeeded = true;
+
         if (succeeded) {
             Payment payment = new Payment( (long) userId, (long) userId, buyerBalance);
             service.savePayment(payment);
@@ -68,6 +69,16 @@ public class PaymentServiceController {
     @RequestMapping(value = "/payment/{id}", method = RequestMethod.GET)
     public String getPayment(@PathVariable("id") String id) {
         JSONObject response = new JSONObject();
+
+        /** DIS IS HOW YOU POST SOMETHING TY JAVA //
+        try {
+            Request.Post("http://localhost:8080/pay")
+                    .bodyForm(Form.form().add("userId", "1").build())
+                    .execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+         **/
         try {
             long userId = Long.parseLong(id);
             response.put("bought", service.getPaymentsByBuyer(userId));
