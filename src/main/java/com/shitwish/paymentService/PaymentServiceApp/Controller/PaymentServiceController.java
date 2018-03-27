@@ -1,5 +1,6 @@
 package com.shitwish.paymentService.PaymentServiceApp.Controller;
 
+import com.google.gson.Gson;
 import com.shitwish.paymentService.PaymentServiceApp.Model.Payment;
 import com.shitwish.paymentService.PaymentServiceApp.Service.PaymentService;
 import org.json.JSONArray;
@@ -8,8 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 public class PaymentServiceController {
+
+    Gson gson = new Gson();
 
     @Autowired
     PaymentService service;
@@ -18,7 +24,7 @@ public class PaymentServiceController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String index() {
-        return "Payment service";
+        return "dummy";
     }
 
     @RequestMapping(value = "/pay", method = RequestMethod.POST)
@@ -37,18 +43,21 @@ public class PaymentServiceController {
         JSONObject orderJSON = new JSONObject("{ 'orders': [ { 'field1' : 'hello' }, { 'field1' : 'world' } ]} ");
         JSONArray orders = (JSONArray) orderJSON.get("orders");
                 //TODO: Getting the seller's id from products and price
-
                 for (int i = 0; i < orders.length(); i++){
                     System.out.println(orders.getJSONObject(i).get("field1"));
                 }
 
         // TODO: Here comes process of payment
 
-
         boolean succeeded = true;
+        // TODO: POST REQUESTS TO User Service to change balance
+
+
         // TODO: Here comes the status change request for OrderService
+        // TODO: POST REQUEST to Order Service
 
         // TODO: Here comes the request for Product service (change quantity)
+        // TODO: POST REQUEST TO Product Service
 
 
         JSONObject response = new JSONObject();
@@ -68,7 +77,7 @@ public class PaymentServiceController {
 
     @RequestMapping(value = "/payment/{id}", method = RequestMethod.GET)
     public String getPayment(@PathVariable("id") String id) {
-        JSONObject response = new JSONObject();
+        Map<String, Object> responseObject = new HashMap<>();
 
         /** DIS IS HOW YOU POST SOMETHING TY JAVA //
         try {
@@ -81,12 +90,12 @@ public class PaymentServiceController {
          **/
         try {
             long userId = Long.parseLong(id);
-            response.put("bought", service.getPaymentsByBuyer(userId));
-            response.put("sold", service.getPaymentsBySeller(userId));
+            responseObject.put("bought", service.getPaymentsByBuyer(userId));
+            responseObject.put("sold", service.getPaymentsBySeller(userId));
         } catch (NumberFormatException e) {
-            response.put("message", "Wrong user ID.");
+            responseObject.put("message", "Wrong user ID.");
         }
-        return String.valueOf(response);
+        return String.valueOf(gson.toJson(responseObject));
     }
 
 }

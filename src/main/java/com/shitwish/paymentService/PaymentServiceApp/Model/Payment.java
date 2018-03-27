@@ -25,9 +25,13 @@ public class Payment {
     private BigDecimal amount;
 
     public Payment(long seller, long buyer, int amount) {
+        this();
         this.seller = seller;
         this.buyer = buyer;
         this.amount = BigDecimal.valueOf(amount);
         this.dateOfTransaction = new Date();
+    }
+
+    private Payment() {
     }
 }

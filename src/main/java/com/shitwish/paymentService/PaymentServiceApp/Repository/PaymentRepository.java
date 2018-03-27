@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
-    List<Payment> getAllByBuyer(Long id);
-    List<Payment> getAllBySeller(Long id);
+    List<Payment> getAllByBuyer(long id);
+    List<Payment> getAllBySeller(long id);
 }
