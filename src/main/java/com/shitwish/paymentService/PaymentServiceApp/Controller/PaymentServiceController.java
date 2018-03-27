@@ -31,14 +31,12 @@ public class PaymentServiceController {
         String buyerResponse = restTemplate.getForObject("https://shitwish-user.herokuapp.com/user/" + userId, String.class);
         JSONObject buyerJSON = new JSONObject(buyerResponse);
         int buyerBalance = (int) buyerJSON.get("balance");
-        Payment payment = new Payment( (long) userId, (long) userId, buyerBalance);
-        service.savePayment(payment);
+
         // TODO: Here comes the request for OrderService (getting the order with products) with fake status
 
         //String orderResponse = restTemplate.getForObject("orderservice/getForUser/" + userId, String.class);
         JSONObject orderJSON = new JSONObject("{ 'orders': [ { 'field1' : 'hello' }, { 'field1' : 'world' } ]} ");
         JSONArray orders = (JSONArray) orderJSON.get("orders");
-
                 //TODO: Getting the seller's id from products and price
 
                 for (int i = 0; i < orders.length(); i++){
@@ -53,8 +51,17 @@ public class PaymentServiceController {
 
 
         JSONObject response = new JSONObject();
-
-        return String.valueOf(response.put("success", true));
+        boolean succeeded = true;
+        if (succeeded) {
+            Payment payment = new Payment( (long) userId, (long) userId, buyerBalance);
+            service.savePayment(payment);
+            response.put("success", true);
+            response.put("message", "Payment successful!");
+        } else {
+            response.put("success", false);
+            response.put("message", "Insufficient wallet balance.");
+        }
+        return String.valueOf(response);
     }
 
 
