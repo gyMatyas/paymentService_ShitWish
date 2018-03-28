@@ -19,7 +19,7 @@ import java.util.Map;
 @RestController
 public class PaymentServiceController {
 
-    Gson gson = new Gson();
+    private Gson gson = new Gson();
 
     @Autowired
     PaymentService service;
@@ -49,6 +49,7 @@ public class PaymentServiceController {
         String orderResponse = restTemplate.getForObject("https://shitwish-order-service.herokuapp.com/get-active-order/" + userId, String.class);
         System.out.println(orderResponse);
         JSONObject order = new JSONObject(orderResponse);
+
         // Getting the seller's id from products and price
         if (order.has("productIds")) {
             double totalPrice = 0;
@@ -59,47 +60,13 @@ public class PaymentServiceController {
                 totalPrice = service.getSellersData(totalPrice, sellers, (int) productId);
             }
             succeeded = totalPrice <= buyerBalance;
-
             // Process of payment
-
-            if (succeeded) {
-                for (Map<String, String> seller : sellers) {
-                    try {
-                        Payment payment = service.payUser(userId, seller);
-                        service.savePayment(payment);
-                    } catch (IOException e) {
-                        service.responseError(response, "Payment has encountered an error!");
-                        return String.valueOf(response);
-                    }
-                }
-                try {
-                    service.withdrawUser(userId, (int) totalPrice);
-                } catch (IOException e) {
-                    service.responseError(response, "Withdrawing money encountered an error!");
-                    return String.valueOf(response);
-                }
-
-                for (Object productId : productIds) {
-                    try {
-                        Request.Post("http://shitwish-product.herokuapp.com/products/sell-product?id=" + (int) productId )
-                                .execute();
-                        System.out.println("Changed the status for product : " + (int) productId);
-                    } catch (IOException e) {
-                        service.responseError(response, "Changing the product status encountered an error!");
-                        return String.valueOf(response);
-                    }
-                }
-
-                service.responseSuccess(response);
+            if (service.processOfPayment(succeeded, response, userId, (int) totalPrice, sellers, productIds))
                 return String.valueOf(response);
-            }
-            // TODO: Here comes the status change request for OrderService
-            // TODO: POST REQUEST to Order Service
-
-            // TODO: Here comes the request for Product service (change quantity)
-            // TODO: POST REQUEST TO Product Service
+            service.responseError(response, "Insufficient wallet balance.");
+            return String.valueOf(response);
         }
-        service.responseError(response, "Insufficient wallet balance.");
+        service.responseError(response, "User has no open order!");
         return String.valueOf(response);
     }
 

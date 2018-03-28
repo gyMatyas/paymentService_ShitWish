@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -92,5 +93,46 @@ public class PaymentService {
     public void responseError(JSONObject response, String errorString) {
         response.put("success", false);
         response.put("message", errorString);
+    }
+
+    public boolean processOfPayment(boolean succeeded, JSONObject response, int userId, int totalPrice, List<Map<String, String>> sellers, JSONArray productIds) {
+        if (succeeded) {
+            for (Map<String, String> seller : sellers) {
+                try {
+                    Payment payment = payUser(userId, seller);
+                    savePayment(payment);
+                } catch (IOException e) {
+                    responseError(response, "Payment has encountered an error!");
+                    return true;
+                }
+            }
+            try {
+                withdrawUser(userId, totalPrice);
+            } catch (IOException e) {
+                responseError(response, "Withdrawing money encountered an error!");
+                return true;
+            }
+
+            for (Object productId : productIds) {
+                try {
+                    Request.Post("http://shitwish-product.herokuapp.com/products/sell-product?id=" + (int) productId)
+                            .execute();
+                    System.out.println("Changed the status for product : " + (int) productId);
+                } catch (IOException e) {
+                    responseError(response, "Changing the product status encountered an error!");
+                    return true;
+                }
+            }
+
+            try {
+                Request.Put("https://shitwish-order-service.herokuapp.com/close-order/" + userId).execute();
+            } catch (IOException e) {
+                responseError(response, "Error while changing order status!");
+            }
+
+            responseSuccess(response);
+            return true;
+        }
+        return false;
     }
 }
